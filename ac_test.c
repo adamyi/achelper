@@ -159,21 +159,23 @@ void ac_printTestsSummary(int maxL) {
 }
 
 // my own wrapper to compare two ints
-void _ac_compare_int(int line, int a, int b, const char *msg) {
+void _ac_compare_int(const char *file, int line, int a, int b,
+                     const char *msg) {
   totalCompares++;
   if (a == b) {
     successCompares++;
-    _ac_log(line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%d", msg, a);
+    _ac_log(file, line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%d", msg, a);
   } else
-    _ac_log(line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%d,%d", msg, a, b);
+    _ac_log(file, line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%d,%d", msg, a, b);
 }
 
 // my own wrapper to compare two strings
-void _ac_compare_string(int line, char *a, char *b, const char *msg) {
+void _ac_compare_string(const char *file, int line, char *a, char *b,
+                        const char *msg) {
   totalCompares++;
   if (strcmp(a, b) == 0) {
     successCompares++;
-    _ac_log(line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%s", msg, a);
+    _ac_log(file, line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%s", msg, a);
   } else
-    _ac_log(line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%s,%s", msg, a, b);
+    _ac_log(file, line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%s,%s", msg, a, b);
 }

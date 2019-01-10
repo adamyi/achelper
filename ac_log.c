@@ -38,7 +38,7 @@ void ac_setLoggingTag(const char *tag) {
 
 char *ac_getLoggingTag() { return loggingTag; }
 
-void _ac_log(int line, int level, char *fmt, ...) {
+void _ac_log(const char *file, int line, int level, const char *fmt, ...) {
   assert(level >= 0 && level <= 3);
 
   if (level <= AC_LOG_LOGGING_LEVEL) {
@@ -59,7 +59,7 @@ void _ac_log(int line, int level, char *fmt, ...) {
     time(&ntime);
     struct tm *timeinfo = localtime(&ntime);
     fprintf(out, "%s[%s] - [%s:%d | %s] - %02d:%02d:%02d: %s\033[0m\n",
-            loggingColor[level], loggingText[level], __FILE__, line, loggingTag,
+            loggingColor[level], loggingText[level], file, line, loggingTag,
             timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
     if (level == AC_LOG_ERROR && AC_LOG_PAUSE_ON_ERROR) {
       fprintf(stderr, "Paused due to error...\n");

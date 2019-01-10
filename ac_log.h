@@ -24,11 +24,11 @@
 #define AC_LOG_INFO 2
 #define AC_LOG_DEBUG 3
 
-#define ac_log(values...) _ac_log(__LINE__, values)
+#define ac_log(values...) _ac_log(__FILE__, __LINE__, values)
 
 void ac_setLoggingTag(const char *tag);
 char *ac_getLoggingTag();
 
-void _ac_log(int line, int level, char *fmt, ...);
+void _ac_log(const char *file, int line, int level, const char *fmt, ...);
 
 #endif  // AC_HELPER_ACLOG_H_

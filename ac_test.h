@@ -21,8 +21,9 @@
 #ifndef AC_HELPER_ACTEST_H_
 #define AC_HELPER_ACTEST_H_
 
-#define ac_compare_int(values...) _ac_compare_int(__LINE__, values)
-#define ac_compare_string(values...) _ac_compare_string(__LINE__, values)
+#define ac_compare_int(values...) _ac_compare_int(__FILE__, __LINE__, values)
+#define ac_compare_string(values...) \
+  _ac_compare_string(__FILE__, __LINE__, values)
 
 #define TEST_CASE_NAME_(test_case_name, test_name) \
   test_case_name##_##test_name##_test
@@ -74,7 +75,8 @@ void _ac_regTest(ac_testInfo *test, const char *testCaseName,
 void ac_runTest(ac_testInfo *test);
 void ac_runAllTests(void);
 void ac_printTestsSummary(int maxL);
-void _ac_compare_int(int line, int a, int b, const char *msg);
-void _ac_compare_string(int line, char *a, char *b, const char *msg);
+void _ac_compare_int(const char *file, int line, int a, int b, const char *msg);
+void _ac_compare_string(const char *file, int line, char *a, char *b,
+                        const char *msg);
 
 #endif  // AC_HELPER_ACTEST_H_
