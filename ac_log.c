@@ -22,18 +22,18 @@
 #include <string.h>
 #include <time.h>
 
-#include "acconfig.h"
-#include "aclog.h"
+#include "ac_config.h"
+#include "ac_log.h"
 
 // constants for logging
 
 static const char loggingText[4][6] = {"FATAL", "ERROR", "INFO", "DEBUG"};
 static const char loggingColor[4][8] = {"\033[0;31m", "\033[0;31m",
                                         "\033[0;33m", "\033[0;34m"};
-static char loggingTag[ACHELPER_MAX_BUFFER_LENGTH];
+static char loggingTag[AC_HELPER_MAX_BUFFER_LENGTH];
 
 void ac_setLoggingTag(const char *tag) {
-  strncpy(loggingTag, tag, ACHELPER_MAX_BUFFER_LENGTH);
+  strncpy(loggingTag, tag, AC_HELPER_MAX_BUFFER_LENGTH);
 }
 
 char *ac_getLoggingTag() { return loggingTag; }
@@ -41,18 +41,18 @@ char *ac_getLoggingTag() { return loggingTag; }
 void _ac_log(int line, int level, char *fmt, ...) {
   assert(level >= 0 && level <= 3);
 
-  if (level <= ACLOG_LOGGING_LEVEL) {
+  if (level <= AC_LOG_LOGGING_LEVEL) {
     FILE *out;
-    if (level <= ACLOG_ERROR)
+    if (level <= AC_LOG_ERROR)
       out = stderr;
     else
       out = stdout;
-    char buffer[ACHELPER_MAX_BUFFER_LENGTH];
+    char buffer[AC_HELPER_MAX_BUFFER_LENGTH];
 
     // parse format string
     va_list vl;
     va_start(vl, fmt);
-    vsnprintf(buffer, ACHELPER_MAX_BUFFER_LENGTH, fmt, vl);
+    vsnprintf(buffer, AC_HELPER_MAX_BUFFER_LENGTH, fmt, vl);
     va_end(vl);
 
     time_t ntime;
@@ -61,7 +61,7 @@ void _ac_log(int line, int level, char *fmt, ...) {
     fprintf(out, "%s[%s] - [%s:%d | %s] - %02d:%02d:%02d: %s\033[0m\n",
             loggingColor[level], loggingText[level], __FILE__, line, loggingTag,
             timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
-    if (level == ACLOG_ERROR && ACLOG_PAUSE_ON_ERROR) {
+    if (level == AC_LOG_ERROR && AC_LOG_PAUSE_ON_ERROR) {
       fprintf(stderr, "Paused due to error...\n");
       fprintf(stderr, "[C]ontinue; [e]nd program: ");
       char tmp[20];  // long enough
@@ -75,5 +75,5 @@ void _ac_log(int line, int level, char *fmt, ...) {
       }
     }
   }
-  if (level == ACLOG_FATAL) err(EXIT_FAILURE, "Panic due to a fatal error!");
+  if (level == AC_LOG_FATAL) err(EXIT_FAILURE, "Panic due to a fatal error!");
 }

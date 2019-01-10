@@ -22,9 +22,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "acconfig.h"
-#include "aclog.h"
-#include "actest.h"
+#include "ac_config.h"
+#include "ac_log.h"
+#include "ac_test.h"
 
 static ac_TestInfo firstTest = NULL;
 static ac_TestInfo lastTest = NULL;
@@ -35,9 +35,9 @@ static long long successCompares = 0;
 void _ac_regTest(ac_testInfo *test, const char *testCaseName,
                  const char *testName) {
   if (test == NULL) {
-    ac_log(ACLOG_FATAL, "%s - %s does not exist!", testCaseName, testName);
+    ac_log(AC_LOG_FATAL, "%s - %s does not exist!", testCaseName, testName);
   }
-  ac_log(ACLOG_INFO, "Loading test %s - %s", testCaseName, testName);
+  ac_log(AC_LOG_INFO, "Loading test %s - %s", testCaseName, testName);
   if (firstTest == NULL) {
     firstTest = test;
     lastTest = test;
@@ -49,23 +49,23 @@ void _ac_regTest(ac_testInfo *test, const char *testCaseName,
 
 // run a single test
 void ac_runTest(ac_testInfo *test) {
-  snprintf(ac_getLoggingTag(), ACHELPER_MAX_BUFFER_LENGTH, "%s | %s",
+  snprintf(ac_getLoggingTag(), AC_HELPER_MAX_BUFFER_LENGTH, "%s | %s",
            test->testCaseName, test->testName);
-  ac_log(ACLOG_INFO, "Running test %s - %s", test->testCaseName,
+  ac_log(AC_LOG_INFO, "Running test %s - %s", test->testCaseName,
          test->testName);
   if (test->testBody != NULL) {
     test->testBody();
   } else {
     test->testBody_f(test->fixtureSetter());
   }
-  ac_log(ACLOG_INFO, " Ending test %s - %s", test->testCaseName,
+  ac_log(AC_LOG_INFO, " Ending test %s - %s", test->testCaseName,
          test->testName);
 }
 
 // run all registered tests
-void runAllTests() {
-  char oriLogTag[ACHELPER_MAX_BUFFER_LENGTH];
-  strncpy(oriLogTag, ac_getLoggingTag(), ACHELPER_MAX_BUFFER_LENGTH);
+void ac_runAllTests() {
+  char oriLogTag[AC_HELPER_MAX_BUFFER_LENGTH];
+  strncpy(oriLogTag, ac_getLoggingTag(), AC_HELPER_MAX_BUFFER_LENGTH);
 
   ac_testInfo *test = firstTest;
   int totalTests = 0, successTests = 0;
@@ -82,10 +82,10 @@ void runAllTests() {
     if (oriTotalCompares == oriSuccessCompares) {
       test->success = true;
       successTests++;
-      ac_log(ACLOG_INFO, "Test passed (%d assertions)!", oriTotalCompares);
+      ac_log(AC_LOG_INFO, "Test passed (%d assertions)!", oriTotalCompares);
     } else {
       test->success = false;
-      ac_log(ACLOG_ERROR,
+      ac_log(AC_LOG_ERROR,
              "Test failed"
              " (only %lld out of %lld assertions passed)!",
              oriSuccessCompares, oriTotalCompares);
@@ -94,19 +94,19 @@ void runAllTests() {
   }
 
   ac_setLoggingTag(oriLogTag);
-  ac_log(ACLOG_INFO,
+  ac_log(AC_LOG_INFO,
          "All tests ended. %d out of %d tests passed "
          "(%lld out of %lld assertions passed)! See log for details. "
          "Below is a summary table.",
          successTests, totalTests, successCompares, totalCompares);
   ac_printTestsSummary(maxNameLength);
-  if (successTests < totalTests && (!ACLOG_PAUSE_ON_ERROR)) {
-    ac_log(ACLOG_INFO,
-           "[HINT] You can set ACLOG_PAUSE_ON_ERROR to TRUE, "
+  if (successTests < totalTests && (!AC_LOG_PAUSE_ON_ERROR)) {
+    ac_log(AC_LOG_INFO,
+           "[HINT] You can set AC_LOG_PAUSE_ON_ERROR to TRUE, "
            "which will pause the program whenever an error/mismatch occurs "
            "in a test so that you can take a closer look~");
   } else {
-    ac_log(ACLOG_INFO,
+    ac_log(AC_LOG_INFO,
            "[HINT] If you want, you can pipe the result of this"
            " tester to see it more clearly. E.g. pipe into `more` or `less`,"
            " or just redirect output to a file.");
@@ -163,9 +163,9 @@ void _ac_compare_int(int line, int a, int b, const char *msg) {
   totalCompares++;
   if (a == b) {
     successCompares++;
-    _ac_log(line, ACLOG_DEBUG, "[DIFF MATCH] %s=%d", msg, a);
+    _ac_log(line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%d", msg, a);
   } else
-    _ac_log(line, ACLOG_ERROR, "[DIFF MISMATCH] %s=%d,%d", msg, a, b);
+    _ac_log(line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%d,%d", msg, a, b);
 }
 
 // my own wrapper to compare two strings
@@ -173,7 +173,7 @@ void _ac_compare_string(int line, char *a, char *b, const char *msg) {
   totalCompares++;
   if (strcmp(a, b) == 0) {
     successCompares++;
-    _ac_log(line, ACLOG_DEBUG, "[DIFF MATCH] %s=%s", msg, a);
+    _ac_log(line, AC_LOG_DEBUG, "[DIFF MATCH] %s=%s", msg, a);
   } else
-    _ac_log(line, ACLOG_ERROR, "[DIFF MISMATCH] %s=%s,%s", msg, a, b);
+    _ac_log(line, AC_LOG_ERROR, "[DIFF MISMATCH] %s=%s,%s", msg, a, b);
 }

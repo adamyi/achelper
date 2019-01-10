@@ -13,13 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "acconstant.h"
+#ifndef AC_HELPER_ACCONSTANT_H_
+#define AC_HELPER_ACCONSTANT_H_
 
-#ifndef ACHELPER_ACCONFIG_H_
-#define ACHELPER_ACCONFIG_H_
+#ifndef FALSE
+#define FALSE (0)
+#endif  // FALSE
 
-#define ACHELPER_MAX_BUFFER_LENGTH 1000
-#define ACLOG_LOGGING_LEVEL ACLOG_INFO
-#define ACLOG_PAUSE_ON_ERROR FALSE
+#ifndef TRUE
+#define TRUE !(FALSE)
+#endif  // TRUE
 
-#endif  // ACHELPER_ACCONFIG_H_
+#define TABLE_TOP_LEFT_CORNER "┌"
+#define TABLE_TOP_RIGHT_CORNER "┐"
+#define TABLE_VERTICAL_LINE "│"
+#define TABLE_HORIZONTAL_LINE "─"
+#define TABLE_LEFT_HORIZONTAL_POINT "├"
+#define TABLE_RIGHT_HORIZONTAL_POINT "┤"
+#define TABLE_TOP_VERTICAL_POINT "┬"
+#define TABLE_BOTTOM_VERTICAL_POINT "┴"
+#define TABLE_BOTTOM_LEFT_CORNER "└"
+#define TABLE_BOTTOM_RIGHT_CORNER "┘"
+#define TABLE_CROSS "┼"
+
+#endif  // AC_HELPER_ACCONSTANT_H_

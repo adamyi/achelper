@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "acconfig.h"
-#include "acconstant.h"
+#include "ac_config.h"
+#include "ac_constant.h"
 
-#ifndef ACHELPER_ACLOG_H_
-#define ACHELPER_ACLOG_H_
+#ifndef AC_HELPER_ACLOG_H_
+#define AC_HELPER_ACLOG_H_
 
-#define ACLOG_FATAL 0
-#define ACLOG_ERROR 1
-#define ACLOG_INFO 2
-#define ACLOG_DEBUG 3
+#define AC_LOG_FATAL 0
+#define AC_LOG_ERROR 1
+#define AC_LOG_INFO 2
+#define AC_LOG_DEBUG 3
 
 #define ac_log(values...) _ac_log(__LINE__, values)
 
@@ -31,4 +31,4 @@ char *ac_getLoggingTag();
 
 void _ac_log(int line, int level, char *fmt, ...);
 
-#endif  // ACHELPER_ACLOG_H_
+#endif  // AC_HELPER_ACLOG_H_

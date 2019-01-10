@@ -15,11 +15,11 @@
 
 #include <stdbool.h>
 
-#include "acconfig.h"
-#include "acconstant.h"
+#include "ac_config.h"
+#include "ac_constant.h"
 
-#ifndef ACHELPER_ACTEST_H_
-#define ACHELPER_ACTEST_H_
+#ifndef AC_HELPER_ACTEST_H_
+#define AC_HELPER_ACTEST_H_
 
 #define ac_compare_int(values...) _ac_compare_int(__LINE__, values)
 #define ac_compare_string(values...) _ac_compare_string(__LINE__, values)
@@ -77,4 +77,4 @@ void ac_printTestsSummary(int maxL);
 void _ac_compare_int(int line, int a, int b, const char *msg);
 void _ac_compare_string(int line, char *a, char *b, const char *msg);
 
-#endif  // ACHELPER_ACTEST_H_
+#endif  // AC_HELPER_ACTEST_H_
