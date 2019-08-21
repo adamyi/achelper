@@ -33,7 +33,7 @@ static const char loggingColor[4][8] = {"\033[0;31m", "\033[0;31m",
 static char loggingTag[AC_HELPER_MAX_BUFFER_LENGTH];
 
 void ac_setLoggingTag(const char *tag) {
-  strncpy(loggingTag, tag, AC_HELPER_MAX_BUFFER_LENGTH);
+  strncpy(loggingTag, tag, AC_HELPER_MAX_BUFFER_LENGTH - 1);
 }
 
 char *ac_getLoggingTag() { return loggingTag; }
