@@ -22,19 +22,20 @@
 #include "ac_log.h"
 #include "ac_memory.h"
 
-void *ac_malloc(size_t size, const char *name) {
+void *_ac_malloc(const char *file, int line, size_t size, const char *name) {
   if (size == 0) {
-    ac_log(AC_LOG_DEBUG,
-           "Tried to allocate memory of size 0 for %s, returned NULL", name);
+    _ac_log(file, line, AC_LOG_DEBUG,
+            "Tried to allocate memory of size 0 for %s, returned NULL", name);
     return NULL;
   }
   void *ptr = malloc(size);
   if (ptr == NULL) {
-    ac_log(AC_LOG_FATAL, "Failed to allocate memory of size %d at %p for %s",
-           size, ptr, name);
+    _ac_log(file, line, AC_LOG_FATAL,
+            "Failed to allocate memory of size %d at %p for %s", size, ptr,
+            name);
     __builtin_unreachable();
   }
-  ac_log(AC_LOG_DEBUG, "Allocated memory of size %d at %p for %s", size, ptr,
-         name);
+  _ac_log(file, line, AC_LOG_DEBUG, "Allocated memory of size %d at %p for %s",
+          size, ptr, name);
   return ptr;
 }

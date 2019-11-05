@@ -1,0 +1,12 @@
+cc_library(
+  name = "achelper",
+  srcs = glob(["ac_*.c"], exclude=["ac_protoc.c"]),
+  hdrs = glob(["ac_*.h"]),
+  visibility = ["//visibility:public"],
+)
+
+cc_binary(
+  name = "ac_protoc",
+  srcs = ["ac_protoc.c"],
+  visibility = ["//visibility:public"],
+)

@@ -21,6 +21,8 @@
 #ifndef AC_HELPER_ACMEMORY_H_
 #define AC_HELPER_ACMEMORY_H_
 
-void *ac_malloc(size_t size, const char *name);
+#define ac_malloc(values...) _ac_malloc(__FILE__, __LINE__, values)
+
+void *_ac_malloc(const char *file, int line, size_t size, const char *name);
 
 #endif  // AC_HELPER_ACMEMORY_H_
