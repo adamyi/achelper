@@ -28,13 +28,18 @@
 #include "ac_memory.h"
 #include "ac_protobuf.h"
 
-size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result) {
+size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result, size_t len) {
   *result = 0;
   size_t ret = 0;
+  if (len > 8) len = 8;
   do {
     ++ret;
-    if (ret == 9) {
-      // TODO: overflow error handling
+    if (ret > len) {
+      ac_log(AC_LOG_INFO,
+             "protobuf: cannot decode VBE since there aren't enough bytes in "
+             "msg (remaining: %u)",
+             len);
+      return 0;
     }
     *result = (*result << 7) | (*vbe & 0x7F);
   } while (*(vbe++) & 0x80);
@@ -62,11 +67,13 @@ size_t ac_uint642vbe(uint64_t val, uint8_t *vbe) {
   return ret;
 }
 
-size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field) {
+size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field,
+                                size_t len) {
   // NOTES(adamyi@): msgkey should be able to store within uint32_t since
   // fieldnum max size is 2^29 but our API for VB decoding returns uint64_t
   uint64_t msgkey;
-  size_t ret = ac_vbe2uint64(msg, &msgkey);
+  size_t ret = ac_vbe2uint64(msg, &msgkey, len);
+  if (ret == 0) return 0;
   ac_protobuf_field_t *f =
       ac_malloc(sizeof(ac_protobuf_field_t), "[ac internal] protobuf field");
   f->id = msgkey >> 3;
@@ -75,23 +82,51 @@ size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field) {
   switch (f->wiretype) {
     case 0:  // varint
       f->value = ac_malloc(8, "[ac internal] protobuf varint");
-      ret += ac_vbe2uint64(msg + ret, (uint64_t *)(f->value));
+      size_t vberead =
+          ac_vbe2uint64(msg + ret, (uint64_t *)(f->value), len - ret);
+      if (vberead == 0) {
+        free(f->value);
+        free(f);
+        return 0;
+      }
+      ret += vberead;
       ac_log(AC_LOG_DEBUG, "%d: varint - %lu", f->id, *(uint64_t *)(f->value));
       break;
     case 1:  // 64-bit
+      if (len - ret < 8) {
+        ac_log(AC_LOG_INFO,
+               "protobuf: cannot read 64-bit, remaining bytes %u < 8",
+               len - ret);
+        free(f);
+        return 0;
+      }
       f->value = ac_malloc(8, "[ac internal] protobuf 64bit");
       memcpy(f->value, msg + ret, 8);
       ret += 8;
       ac_log(AC_LOG_DEBUG, "%d: 64bit - %lu", f->id, *(uint64_t *)(f->value));
       break;
     case 2:;  // length-delimited
-      uint64_t len;
-      ret += ac_vbe2uint64(msg + ret, &len);
-      f->value = ac_malloc(len + 1, "[ac internal] protobuf length-delimited");
-      memcpy(f->value, msg + ret, len);
-      *((char *)(f->value + len)) = '\0';
-      f->len = len;
-      ret += len;
+      uint64_t length;
+      uint32_t lenlen = ac_vbe2uint64(msg + ret, &length, len - ret);
+      if (lenlen == 0) {
+        free(f);
+        return 0;
+      }
+      ret += lenlen;
+      if (len - ret < length) {
+        ac_log(AC_LOG_INFO,
+               "protobuf: cannot read %u bytes for length-delimited field, "
+               "remaining bytes %u < %u",
+               length, len - ret, length);
+        free(f);
+        return 0;
+      }
+      f->value =
+          ac_malloc(length + 1, "[ac internal] protobuf length-delimited");
+      memcpy(f->value, msg + ret, length);
+      *((char *)(f->value + length)) = '\0';
+      f->len = length;
+      ret += length;
       ac_log(AC_LOG_DEBUG, "%d: lendel - %s", f->id, f->value);
       break;
     case 3:  // start group
@@ -101,6 +136,13 @@ size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field) {
              "achelper!");
       break;
     case 5:  // 32-bit
+      if (len - ret < 4) {
+        ac_log(AC_LOG_INFO,
+               "protobuf: cannot read 32-bit, remaining bytes %u < 4",
+               len - ret);
+        free(f);
+        return 0;
+      }
       f->value = ac_malloc(4, "[ac internal] protobuf 32bit");
       memcpy(f->value, msg + ret, 4);
       ret += 4;
@@ -125,11 +167,17 @@ ac_protobuf_message_t *ac_decode_protobuf_msg_with_n_fields(uint8_t *msg,
   ret->fields = NULL;
   ret->fieldnum = 0;
   ac_protobuf_field_t **next = &(ret->fields);
-  int read, curr;
+  size_t read, curr;
   for (curr = 0, read = 0; curr < len && fields != 0; curr += read, fields--) {
-    read = ac_decode_protobuf_field(msg + curr, next);
+    read = ac_decode_protobuf_field(msg + curr, next, len - curr);
     ac_log(AC_LOG_DEBUG, "ac_decode_protobuf_field read %d bytes", read);
-    if (read <= 0) break;
+    if (read == 0) {
+      ac_protobuf_free_msg(ret);
+      ac_log(AC_LOG_INFO,
+             "ac_decode_protobuf_msg_with_n_fields failed since there aren't "
+             "enough bytes");
+      return NULL;
+    }
     next = &((*next)->next);
   }
   *readbytes = curr;

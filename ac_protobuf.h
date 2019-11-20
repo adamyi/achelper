@@ -41,9 +41,10 @@ typedef struct ac_protobuf_string {
   size_t len;
 } ac_protobuf_string_t;
 
-size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result);
+size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result, size_t len);
 size_t ac_uint642vbe(uint64_t val, uint8_t *vbe);
-size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field);
+size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field,
+                                size_t len);
 ac_protobuf_message_t *ac_decode_protobuf_msg(uint8_t *msg, size_t bytes,
                                               size_t *readbytes);
 ac_protobuf_message_t *ac_decode_protobuf_msg_with_n_fields(uint8_t *msg,

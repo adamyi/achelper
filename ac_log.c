@@ -76,5 +76,5 @@ void _ac_log(const char *file, int line, int level, const char *fmt, ...) {
       }
     }
   }
-  if (level == AC_LOG_FATAL) err(EXIT_FAILURE, "Panic due to a fatal error!");
+  if (level == AC_LOG_FATAL) errx(EXIT_FAILURE, "Panic due to a fatal error!");
 }
