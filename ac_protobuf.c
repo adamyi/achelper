@@ -28,6 +28,15 @@
 #include "ac_memory.h"
 #include "ac_protobuf.h"
 
+static bool ac_proto_logging_enabled = true;
+
+#define AC_PBLOG(values...) \
+  if (ac_proto_logging_enabled) ac_log(values)
+
+void ac_protobuf_enable_logging() { ac_proto_logging_enabled = true; }
+
+void ac_protobuf_disable_logging() { ac_proto_logging_enabled = false; }
+
 size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result, size_t len) {
   *result = 0;
   size_t ret = 0;
@@ -35,10 +44,10 @@ size_t ac_vbe2uint64(uint8_t *vbe, uint64_t *result, size_t len) {
   do {
     ++ret;
     if (ret > len) {
-      ac_log(AC_LOG_INFO,
-             "protobuf: cannot decode VBE since there aren't enough bytes in "
-             "msg (remaining: %u)",
-             len);
+      AC_PBLOG(AC_LOG_INFO,
+               "protobuf: cannot decode VBE since there aren't enough bytes in "
+               "msg (remaining: %u)",
+               len);
       return 0;
     }
     *result = (*result << 7) | (*vbe & 0x7F);
@@ -85,40 +94,41 @@ size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field,
       size_t vberead =
           ac_vbe2uint64(msg + ret, (uint64_t *)(f->value), len - ret);
       if (vberead == 0) {
-        free(f->value);
-        free(f);
+        ac_free(f->value);
+        ac_free(f);
         return 0;
       }
       ret += vberead;
-      ac_log(AC_LOG_DEBUG, "%d: varint - %lu", f->id, *(uint64_t *)(f->value));
+      AC_PBLOG(AC_LOG_DEBUG, "%d: varint - %lu", f->id,
+               *(uint64_t *)(f->value));
       break;
     case 1:  // 64-bit
       if (len - ret < 8) {
-        ac_log(AC_LOG_INFO,
-               "protobuf: cannot read 64-bit, remaining bytes %u < 8",
-               len - ret);
-        free(f);
+        AC_PBLOG(AC_LOG_INFO,
+                 "protobuf: cannot read 64-bit, remaining bytes %u < 8",
+                 len - ret);
+        ac_free(f);
         return 0;
       }
       f->value = ac_malloc(8, "[ac internal] protobuf 64bit");
       memcpy(f->value, msg + ret, 8);
       ret += 8;
-      ac_log(AC_LOG_DEBUG, "%d: 64bit - %lu", f->id, *(uint64_t *)(f->value));
+      AC_PBLOG(AC_LOG_DEBUG, "%d: 64bit - %lu", f->id, *(uint64_t *)(f->value));
       break;
     case 2:;  // length-delimited
       uint64_t length;
       uint32_t lenlen = ac_vbe2uint64(msg + ret, &length, len - ret);
       if (lenlen == 0) {
-        free(f);
+        ac_free(f);
         return 0;
       }
       ret += lenlen;
       if (len - ret < length) {
-        ac_log(AC_LOG_INFO,
-               "protobuf: cannot read %u bytes for length-delimited field, "
-               "remaining bytes %u < %u",
-               length, len - ret, length);
-        free(f);
+        AC_PBLOG(AC_LOG_INFO,
+                 "protobuf: cannot read %u bytes for length-delimited field, "
+                 "remaining bytes %u < %u",
+                 length, len - ret, length);
+        ac_free(f);
         return 0;
       }
       f->value =
@@ -127,26 +137,26 @@ size_t ac_decode_protobuf_field(uint8_t *msg, ac_protobuf_field_t **field,
       *((char *)(f->value + length)) = '\0';
       f->len = length;
       ret += length;
-      ac_log(AC_LOG_DEBUG, "%d: lendel - %s", f->id, f->value);
+      AC_PBLOG(AC_LOG_DEBUG, "%d: lendel - %s", f->id, f->value);
       break;
     case 3:  // start group
     case 4:  // end group
-      ac_log(AC_LOG_ERROR,
-             "Protobuf group is deprecated and hence not implemented in "
-             "achelper!");
+      AC_PBLOG(AC_LOG_ERROR,
+               "Protobuf group is deprecated and hence not implemented in "
+               "achelper!");
       break;
     case 5:  // 32-bit
       if (len - ret < 4) {
-        ac_log(AC_LOG_INFO,
-               "protobuf: cannot read 32-bit, remaining bytes %u < 4",
-               len - ret);
-        free(f);
+        AC_PBLOG(AC_LOG_INFO,
+                 "protobuf: cannot read 32-bit, remaining bytes %u < 4",
+                 len - ret);
+        ac_free(f);
         return 0;
       }
       f->value = ac_malloc(4, "[ac internal] protobuf 32bit");
       memcpy(f->value, msg + ret, 4);
       ret += 4;
-      ac_log(AC_LOG_DEBUG, "%d: 32bit - %lu", f->id, *(uint32_t *)(f->value));
+      AC_PBLOG(AC_LOG_DEBUG, "%d: 32bit - %lu", f->id, *(uint32_t *)(f->value));
       break;
   }
   *field = f;
@@ -170,12 +180,12 @@ ac_protobuf_message_t *ac_decode_protobuf_msg_with_n_fields(uint8_t *msg,
   size_t read, curr;
   for (curr = 0, read = 0; curr < len && fields != 0; curr += read, fields--) {
     read = ac_decode_protobuf_field(msg + curr, next, len - curr);
-    ac_log(AC_LOG_DEBUG, "ac_decode_protobuf_field read %d bytes", read);
+    AC_PBLOG(AC_LOG_DEBUG, "ac_decode_protobuf_field read %d bytes", read);
     if (read == 0) {
       ac_protobuf_free_msg(ret);
-      ac_log(AC_LOG_INFO,
-             "ac_decode_protobuf_msg_with_n_fields failed since there aren't "
-             "enough bytes");
+      AC_PBLOG(AC_LOG_INFO,
+               "ac_decode_protobuf_msg_with_n_fields failed since there aren't "
+               "enough bytes");
       return NULL;
     }
     next = &((*next)->next);
@@ -199,9 +209,9 @@ uint8_t *ac_encode_protobuf_msg(ac_protobuf_message_t *msg, size_t *bytes) {
         break;
       case 3:  // start group
       case 4:  // end group
-        ac_log(AC_LOG_ERROR,
-               "Protobuf group is deprecated and hence not implemented in "
-               "achelper!");
+        AC_PBLOG(AC_LOG_ERROR,
+                 "Protobuf group is deprecated and hence not implemented in "
+                 "achelper!");
         break;
       case 5:  // 32-bit
         len += 4;
@@ -230,9 +240,9 @@ uint8_t *ac_encode_protobuf_msg(ac_protobuf_message_t *msg, size_t *bytes) {
         break;
       case 3:  // start group
       case 4:  // end group
-        ac_log(AC_LOG_ERROR,
-               "Protobuf group is deprecated and hence not implemented in "
-               "achelper!");
+        AC_PBLOG(AC_LOG_ERROR,
+                 "Protobuf group is deprecated and hence not implemented in "
+                 "achelper!");
         break;
       case 5:  // 32-bit
         memcpy(cret, curr->value, 4);
@@ -260,13 +270,13 @@ void ac_protobuf_free_msg(ac_protobuf_message_t *msg) {
   if (curr != NULL) {
     ac_protobuf_field_t *next = curr->next;
     while (curr != NULL) {
-      free(curr->value);
-      free(curr);
+      ac_free(curr->value);
+      ac_free(curr);
       curr = next;
       if (curr != NULL) next = curr->next;
     }
   }
-  free(msg);
+  ac_free(msg);
 }
 
 void ac_protobuf_print_msg(ac_protobuf_message_t *msg) {

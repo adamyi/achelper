@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <memory.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,20 +23,62 @@
 #include "ac_log.h"
 #include "ac_memory.h"
 
+#define AC_MEMORY_DEBUG(file, line, values...) \
+  if (memconf.logging_enabled) _ac_log(file, line, AC_LOG_DEBUG, values)
+
+static ac_memory_config_t memconf = {.type = AC_MEMORY_LIBC_MALLOC,
+                                     .panic_on_oom = false,
+                                     .logging_enabled = true};
+
+void ac_set_memory_config(ac_memory_config_t *config) {
+  memcpy(&memconf, config, sizeof(ac_memory_config_t));
+}
+
+ac_memory_config_t ac_get_memory_config() { return memconf; }
+
 void *_ac_malloc(const char *file, int line, size_t size, const char *name) {
   if (size == 0) {
-    _ac_log(file, line, AC_LOG_DEBUG,
-            "Tried to allocate memory of size 0 for %s, returned NULL", name);
+    AC_MEMORY_DEBUG(file, line,
+                    "Tried to allocate memory of size 0 for %s, returned NULL",
+                    name);
     return NULL;
   }
-  void *ptr = malloc(size);
-  if (ptr == NULL) {
+  void *ptr;
+  switch (memconf.type) {
+    case AC_MEMORY_LIBC_MALLOC:
+      ptr = malloc(size);
+      break;
+    case AC_MEMORY_DUMMY_STACK:
+      if (memconf.size > size) {
+        memconf.size -= size;
+        ptr = memconf.region;
+        memconf.region += size;
+      }
+      break;
+    default:
+      ac_log(AC_LOG_ERROR, "ac_free: memconf->type invalid");
+  }
+
+  if (ptr == NULL && memconf.panic_on_oom) {
     _ac_log(file, line, AC_LOG_FATAL,
             "Failed to allocate memory of size %d at %p for %s", size, ptr,
             name);
     __builtin_unreachable();
   }
-  _ac_log(file, line, AC_LOG_DEBUG, "Allocated memory of size %d at %p for %s",
-          size, ptr, name);
+  AC_MEMORY_DEBUG(file, line, "Allocated memory of size %d at %p for %s", size,
+                  ptr, name);
   return ptr;
+}
+
+void ac_free(void *ptr) {
+  switch (memconf.type) {
+    case AC_MEMORY_LIBC_MALLOC:
+      free(ptr);
+      break;
+    case AC_MEMORY_DUMMY_STACK:
+      // nothing to do...
+      break;
+    default:
+      ac_log(AC_LOG_ERROR, "ac_free: memconf->type invalid");
+  }
 }

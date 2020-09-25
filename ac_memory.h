@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "ac_config.h"
 #include "ac_constant.h"
@@ -23,6 +25,24 @@
 
 #define ac_malloc(values...) _ac_malloc(__FILE__, __LINE__, values)
 
+#define AC_MEMORY_LIBC_MALLOC 0  // delegate job to default malloc
+#define AC_MEMORY_DUMMY_STACK \
+  1  // an extremely naive memory allocator, with a pre-allocated stack region
+
+// TODO: implement my own heap
+
+typedef struct ac_memory_config {
+  uint8_t type;
+  bool logging_enabled;
+  bool panic_on_oom;
+  void *region;
+  size_t size;
+} ac_memory_config_t;
+
+void ac_set_memory_config(ac_memory_config_t *config);
+ac_memory_config_t ac_get_memory_config();
+
 void *_ac_malloc(const char *file, int line, size_t size, const char *name);
+void ac_free(void *ptr);
 
 #endif  // AC_HELPER_ACMEMORY_H_
