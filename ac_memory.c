@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ac_memory.h"
+
 #include <memory.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -21,7 +23,6 @@
 
 #include "ac_config.h"
 #include "ac_log.h"
-#include "ac_memory.h"
 
 #define AC_MEMORY_DEBUG(file, line, values...) \
   if (memconf.logging_enabled) _ac_log(file, line, AC_LOG_DEBUG, values)

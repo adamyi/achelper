@@ -15,6 +15,8 @@
 
 // ac_protobuf: my own implementation of Protobuf - (de)serialization library
 
+#include "ac_protobuf.h"
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -26,7 +28,6 @@
 #include "ac_config.h"
 #include "ac_log.h"
 #include "ac_memory.h"
-#include "ac_protobuf.h"
 
 static bool ac_proto_logging_enabled = true;
 

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ac_log.h"
+
 #include <assert.h>
 #include <err.h>
 #include <stdarg.h>
@@ -23,14 +25,19 @@
 #include <time.h>
 
 #include "ac_config.h"
-#include "ac_log.h"
 
 // constants for logging
+
+#define AC_LOG_MAX_FP_PER_LEVEL 5
 
 static const char loggingText[4][6] = {"FATAL", "ERROR", "INFO", "DEBUG"};
 static const char loggingColor[4][8] = {"\033[0;31m", "\033[0;31m",
                                         "\033[0;33m", "\033[0;34m"};
+
 static char loggingTag[AC_HELPER_MAX_BUFFER_LENGTH];
+
+static FILE *loggingFp[4][AC_LOG_MAX_FP_PER_LEVEL];
+static bool loggingFpInited = false;
 
 void ac_setLoggingTag(const char *tag) {
   strncpy(loggingTag, tag, AC_HELPER_MAX_BUFFER_LENGTH - 1);
@@ -38,15 +45,38 @@ void ac_setLoggingTag(const char *tag) {
 
 char *ac_getLoggingTag() { return loggingTag; }
 
+static inline void loggingFpInit() {
+  if (!loggingFpInited) {
+    loggingFpInited = true;
+    memset(loggingFp, 0, sizeof(loggingFp));
+    loggingFp[AC_LOG_FATAL][0] = loggingFp[AC_LOG_ERROR][0] = stderr;
+    loggingFp[AC_LOG_INFO][0] = loggingFp[AC_LOG_DEBUG][0] = stdout;
+  }
+}
+
+void ac_setLoggingFp(int level, FILE *fp) {
+  loggingFpInit();
+  loggingFp[level][0] = fp;
+  loggingFp[level][1] = NULL;
+}
+
+int ac_addLoggingFp(int level, FILE *fp) {
+  loggingFpInit();
+  for (int i = 0; i < AC_LOG_MAX_FP_PER_LEVEL; ++i) {
+    if (loggingFp[level][i] == NULL) {
+      loggingFp[level][i] = fp;
+      if (i != AC_LOG_MAX_FP_PER_LEVEL - 1) loggingFp[level][i + 1] = NULL;
+      return i + 1;
+    }
+  }
+  return -1;
+}
+
 void _ac_log(const char *file, int line, int level, const char *fmt, ...) {
   assert(level >= 0 && level <= 3);
+  loggingFpInit();
 
   if (level <= AC_LOG_LOGGING_LEVEL) {
-    FILE *out;
-    if (level <= AC_LOG_ERROR)
-      out = stderr;
-    else
-      out = stdout;
     char buffer[AC_HELPER_MAX_BUFFER_LENGTH];
 
     // parse format string
@@ -59,9 +89,12 @@ void _ac_log(const char *file, int line, int level, const char *fmt, ...) {
     time_t ntime;
     time(&ntime);
     struct tm *timeinfo = localtime(&ntime);
-    fprintf(out, "%s[%s] - [%s:%d | %s] - %02d:%02d:%02d: %s\033[0m\n",
-            loggingColor[level], loggingText[level], file, line, loggingTag,
-            timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
+    for (int i = 0; i < AC_LOG_MAX_FP_PER_LEVEL && loggingFp[level][i]; ++i) {
+      fprintf(loggingFp[level][i],
+              "%s[%s] - [%s:%d | %s] - %02d:%02d:%02d: %s\033[0m\n",
+              loggingColor[level], loggingText[level], file, line, loggingTag,
+              timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
+    }
     if (level == AC_LOG_ERROR && AC_LOG_PAUSE_ON_ERROR) {
       fprintf(stderr, "Paused due to error...\n");
       fprintf(stderr, "[C]ontinue; [e]nd program: ");

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdio.h>
+
 #include "ac_config.h"
 #include "ac_constant.h"
 
@@ -25,6 +27,9 @@
 #define AC_LOG_DEBUG 3
 
 #define ac_log(values...) _ac_log(__FILE__, __LINE__, values)
+
+void ac_setLoggingFp(int level, FILE *fp);
+int ac_addLoggingFp(int level, FILE *fp);
 
 void ac_setLoggingTag(const char *tag);
 char *ac_getLoggingTag();

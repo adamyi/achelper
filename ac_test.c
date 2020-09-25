@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ac_test.h"
+
 #include <assert.h>
 #include <err.h>
 #include <stdarg.h>
@@ -24,7 +26,6 @@
 
 #include "ac_config.h"
 #include "ac_log.h"
-#include "ac_test.h"
 
 static ac_TestInfo firstTest = NULL;
 static ac_TestInfo lastTest = NULL;
