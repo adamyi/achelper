@@ -44,7 +44,7 @@ void *_ac_malloc(const char *file, int line, size_t size, const char *name) {
                     name);
     return NULL;
   }
-  void *ptr;
+  void *ptr = NULL;
   switch (memconf.type) {
     case AC_MEMORY_LIBC_MALLOC:
       ptr = malloc(size);

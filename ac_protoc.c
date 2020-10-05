@@ -200,11 +200,11 @@ void write_files(const char *dir, const char *msgname, struct field *fields,
   fprintf(fout, "void free%s(struct %s *val) {\n", msgname, msgname);
   for (int i = 0; i < fieldn; i++) {
     if (fields[i].type == 13 || fields[i].type == 14) {
-      fprintf(fout, "  if (val->%s.len > 0)\n", fields[i].name);
-      fprintf(fout, "    free(val->%s.value);\n", fields[i].name);
+      fprintf(fout, "  if (val->%s.value)\n", fields[i].name);
+      fprintf(fout, "    ac_free(val->%s.value);\n", fields[i].name);
     }
   }
-  fprintf(fout, "  free(val);\n");
+  fprintf(fout, "  ac_free(val);\n");
   fprintf(fout, "}\n");
 
   fprintf(fout, "// clang-format on\n");

@@ -169,6 +169,8 @@ ac_protobuf_message_t *ac_decode_protobuf_msg(uint8_t *msg, size_t len,
   return ac_decode_protobuf_msg_with_n_fields(msg, len, -1, readbytes);
 }
 
+// decode msg with exactly n fields. or set n to negative number to disable
+// field limit
 ac_protobuf_message_t *ac_decode_protobuf_msg_with_n_fields(uint8_t *msg,
                                                             size_t len,
                                                             int fields,
@@ -190,6 +192,13 @@ ac_protobuf_message_t *ac_decode_protobuf_msg_with_n_fields(uint8_t *msg,
       return NULL;
     }
     next = &((*next)->next);
+  }
+  if (fields > 0) {
+    ac_protobuf_free_msg(ret);
+    AC_PBLOG(AC_LOG_INFO,
+             "ac_decode_protobuf_msg_with_n_fields failed since there aren't "
+             "enough fields");
+    return NULL;
   }
   *readbytes = curr;
   return ret;
